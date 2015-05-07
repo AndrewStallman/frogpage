@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Frog</title>
+    
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Frog</h1>
+        <p>Asynchronous Graph Processing on GPU with Hybrid Coloring Model</p>
+        <p class="view"><a href="https://github.com/AndrewStallman/Frog">View the Project on GitHub <small>AndrewStallman/Frog</small></a></p>
+        <ul>
+          <li><a href="https://github.com/AndrewStallman/Frog/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/AndrewStallman/Frog/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="http://github.com/AndrewStallman/Frog">Fork On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+      <!--Itroduction-->
+        <h1>Introduction</h1>
+        <p>GPUs have been widely used to accelerate graph processing for complicated computational problems regarding graph theory. Many parallel graph algorithms adopt the asynchronous computing model to accelerate the iterative convergence. Unfortunately, the consistent asynchronous computing requires locking or the atomic operations, leading to significant penalties/overheads when implemented on GPUs. To this end, coloring algorithm is adopted to separate the vertices with potential updating conflicts, guaranteeing the
+        consistency/correctness of the parallel processing. Common coloring algorithms, however, may suffer from low parallelism because of a large number of colors generally required for processing a large-scale graph with billions of vertices.</p>
+        <p>Frog is a light-weight asynchronous processing framework with a hybrid coloring model. It includes three parts: a hybrid graph coloring algorithm, an asynchronous execution model, and a streaming execution engine on GPUs. The first two parts are most critical in our design. The fundamental idea is based on Pareto principle (or 80-20 rule) about coloring algorithms as we observed through masses of real graph coloring cases. </p>
+        <div align="center" class="titleHead picture">
+       <img src="./image/frog_system.jpeg" alt="frog system" width="542" height="277" border="0"> <!-- 1267/422 -->
+       </div>
+       <ul>
+         <li>
+           <h2>Hybird Coloring Model</h2>
+         </li>
+       </ul>
+       <p>
+         We find that majority of vertices (about 80%) are colored with only a few colors, such that they can be read 
+         and updated in a very high degree of parallelism without violating the sequential consistency. Accordingly, 
+         our solution will separate the processing of the vertices based on the distribution of colors. We propose an efficient 
+         pre-partition method that can solve the problem of vertex classification using a moderate number of colors. This 
+         method does not strict all adjacent vertices to be assigned with different colors, which is particularly different 
+         from other graph coloring algorithms. Instead, we only ensure that there are no adjacent vertices assigned together 
+         into the small set of colors. For the vertices with the rest of colors, we combine them together into one color and 
+         process them in a super-step.
+       </p>
+       <div align="center" class="titleHead picture">
+       <img src="./image/frog_asyn.jpg" alt="frog asyn" width="542" height="210" border="0"> <!-- 1267/422 -->
+       </div>
+
+       <ul>
+         <li>
+           <h2>Asynchronous Execution Engine</h2>
+         </li>
+       </ul>
+       <p>
+        After partitioning the
+        graph, our execution engine scans the input graph color by color, updating all the
+        vertices with the same color in parallel (one color as per kernel execution). Since
+        the concurrently accessed vertices must be non-adjacent, there will be no need to
+        lock the adjacent edges when updating a vertex. In our asynchronous approach, we use
+        color-step to describe the process of updating all the vertices in a single partition. As
+        we divide the graph into n partitions, n color-steps should be processed. For each color-step, 
+        we conduct data transfers and GPU kernel function executions at the same time
+        under the support of CUDA streaming technology, to reduce the overhead of PCI-E
+        data transfers and accelerate the whole task.
+       </p>
+
+      <!--Publication-->  
+        <h1>Publications</h1>
+        <ul>
+        <li>
+        <a href="http://grid.hust.edu.cn/xhshi/projects/frog/frog-ppopp15-poster.pdf">
+        Optimization of Asynchronous Graph Processing on GPU with Hybrid Coloring Model. </a> <br>
+        <!--(<a href="./powerswitch/powerswitch-ppopp15-slides.pptx">slides</a>) 
+        (<a href="./frog/frog-ppopp15-poster.pdf">poster</a>)<br> -->
+        Xuanhua Shi, Junling Liang, Sheng Di, Bingsheng He, Hai Jin, Lu Lu, Zhixiang Wang, Xuan Luo, and Jianlong Zhong.<br>
+        ACM SIGPLAN Symposium on Principles and Practice of Parallel Programming (<a target="_blank" href="http://ppopp15.soe.ucsc.edu/">PPoPP'15</a>).
+        Bay Area, California, USA, February, 2015.
+        </li>
+        </ul>
+
+        <!-- Software -->
+        <h1>Open Source</h1>
+        <p>The Frog source code is available at <a target="_blank" href="https://github.com/AndrewStallman/Frog.git">github</a>. <br/>
+        If you have any questions, please contact <a href="mailto:xhshi@hust.edu.cn">Xuanhua Shi</a> for further information.</p>
+
+        <h1>People</h1>
+        <ul>
+        <li><a href="http://grid.hust.edu.cn/hjin/">Hai Jin</a>, Director</li>
+        <li><a href="http://grid.hust.edu.cn/xhshi">Xuanhua Shi</a>, Manager</li>
+        <li><a href="http://mescal.imag.fr/membres/sheng.di/">Sheng Di</a>, <a href="http://www.ntu.edu.sg/home/bshe/">Bingsheng He</a>, <u>Jianlong Zhong</u>, Collaborator</li>
+        <li><u>Junling Liang, Lu Lu, Xuan Luo, Zhixiang Wang,</u> Developer</li>
+        </ul>
+
+        <h1>Acknowleagement</h1>
+        <p>We want to thank Xiaosong Ma of the NCSU, and Pingpeng Yuan of the <a href="http://grid.hust.edu.cn/">HUST SCTS&CGCL Lab</a> for their valuable comments.</p>
+
+        <h1>Related Projects</h1>
+        <p>
+        <a target="_blank" href="https://code.google.com/p/medusa-gpu/">Medusa</a>: Building GPU-based Parallel Sparse Graph Applications with Sequential C/C++ Code.<br>
+        <a target="_blank" href="http://farkhor.github.io/CuSha/">CuSha</a>: CUDA-based vertex-centric graph processing framework.<br>
+        <a target="_blank" href="http://netsyslab.ece.ubc.ca/wiki/index.php/Totem">Totem</a>: Accelerating Graph Processing on Hybrid CPU+GPU Systems.<br>	
+        </p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/AndrewStallman">Frog</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+  </body>
+</html>
